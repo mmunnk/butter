@@ -1,11 +1,10 @@
-import os, customtkinter, tkinter, configparser
+import os, customtkinter, tkinter, configparser, re
 from stat import S_IREAD, S_IRGRP, S_IROTH, S_IWUSR
-from PIL import Image
+from PIL import Image, ImageTk
 
 # Paths
 
 homedir = os.path.expanduser('~')
-
 apexpath = homedir + r'\Saved Games\Respawn\Apex\local\videoconfig.txt'
 
 valpath = homedir + r'\AppData\Local\VALORANT\Saved\Config\\'
@@ -13,6 +12,7 @@ valkey = homedir + r'\AppData\Local\VALORANT\Saved\Config\Windows\RiotLocalMachi
 config = ''
 
 fortpath = homedir + r'\AppData\Local\FortniteGame\Saved\Config\WindowsClient\GameUserSettings.ini'
+
 
 # Checking if the Paths Exist
 
@@ -26,6 +26,12 @@ if os.path.exists(valkey) == True:
 
 if os.path.exists(fortpath) == True:
     installed.append('Fortnite')
+
+if os.path.exists(homedir + '\OneDrive\Documents\Overwatch\Settings\Settings_v0.ini'):
+    ow2path = homedir + '\OneDrive\Documents\Overwatch\Settings\Settings_v0.ini'
+    installed.append('Overwatch 2')
+elif os.path.exists(homedir + '\Documents\Overwatch\Settings\Settings_v0.ini'):
+    ow2path = ow2path = homedir + '\Documents\Overwatch\Settings\Settings_v0.ini'
 
 # Replace Line Function
 
@@ -41,12 +47,62 @@ def replace_line(file_name, line_num, text):
 
 # Game Scripts
 
+def overwatch():
+    render = {'AADetail': '"0"',
+'AnisotropicFiltering': '"0"',
+'DirectionalShadowDetail': '"1"',
+'DynamicRenderScale': '"0"',
+'EffectsQuality': '"1"',
+'FrameRateCap': '"0"',
+'GFXPresetLevel': '"1"',
+'HighQualityUpsample': '"0"',
+'LightQuality': '"0"',
+'LocalFogDetail': '"3"',
+'LocalReflections': '"0"',
+'MaxAnisotropy': '"1"',
+'MaxEffectsAnisotropy': '"1"',
+'MaxExtraQualityAnisotropy': '"1"',
+'MaxWorldScale': '"100.000000"',
+'MinWorldScale': '"75.000000"',
+'ModelQuality': '"1"',
+'ReflexMode': '"1"',
+'RefractionDetail': '"0"',
+'RenderBrightness': '"0.080000"',
+'ShaderQuality': '"1"',
+'ShowFPSCounter': '"1"',
+'SimpleDirectionalShadows': '"1"',
+'SoundQuality': '"1"',
+'SSAODetail': '"0"',
+'SSLRDetailLevel': '"0"',
+'TextureDetail': '"1"',
+'UseCustomFrameRates': '"1"',
+'UseCustomWorldScale': '"1"',
+'VerticalSyncEnabled': '"0"',
+'WindowedFullscreen': '"0"',
+'WindowMode': '"0"'
+    }
+
+    skipped = 0
+    os.chmod(ow2path, S_IWUSR | S_IREAD)
+
+    configx = configparser.ConfigParser(strict=False)
+    configx.optionxform = str
+    configx.read(ow2path)
+    for i in configx["Render.13"].keys():
+        try: configx["Render.13"][i] = render[i]
+
+        except KeyError:
+            skipped = i
+    with open(ow2path, 'w') as f:
+        configx.write(f, space_around_delimiters=False)
+
+
 def fortnite():
 
     # Setting the Config
 
     scalabilitygroups = {'sg.ResolutionQuality': '80',
-               'sg.ViewDistanceQuality': '0',
+               'sg.ViewDistanceQuality': '1',
                'sg.AntiAliasingQuality': '0',
                'sg.ShadowQuality': '0',
                'sg.PostProcessQuality': '0',
@@ -58,6 +114,8 @@ def fortnite():
                'sg.ReflectionQuality': '0'
                 }
 
+    performancemode = {'MeshQuality': '2'}
+
     os.chmod(fortpath, S_IWUSR | S_IREAD)
 
     # Changing the Config
@@ -67,6 +125,14 @@ def fortnite():
     configx.read(fortpath)
     for i in configx["ScalabilityGroups"].keys():
         configx["ScalabilityGroups"][i] = scalabilitygroups[i]
+    with open(fortpath, 'w') as f:
+        configx.write(f, space_around_delimiters=False)
+
+    configx = configparser.ConfigParser(strict=False)
+    configx.optionxform = str
+    configx.read(fortpath)
+    for i in configx["PerformanceMode"].keys():
+        configx["PerformanceMode"][i] = performancemode[i]
     with open(fortpath, 'w') as f:
         configx.write(f, space_around_delimiters=False)
 
@@ -81,22 +147,20 @@ def val():
 
     # Getting the Key
 
-    with open(valkey, 'r') as f:
-        lines=f.readlines()
-        result = []
-        for x in lines:
-            result.append(x.split('LastKnownUser='))
-        key = result[1]
+    key = ''
+
+    configx = configparser.ConfigParser(strict=False)
+    configx.optionxform = str
+    configx.read(valkey)
+    for i in configx["UserInfo"].keys():
+        key = configx["UserInfo"][i]
 
     # Finding the Files
 
-    key = str(key)
-    key = key[6:]
-    key = key[:36]
     valpath = valpath[:len(valpath)-1]
-    for file in os.listdir(valpath):
-        if file.startswith(key):
-            config = valpath + file + r'\Windows\GameUserSettings.ini'
+    for f in os.listdir(valpath):
+        if re.match(key, f):
+            config = valpath + f + r'\Windows\GameUserSettings.ini'
 
     os.chmod(config, S_IWUSR | S_IREAD)
 
@@ -204,13 +268,16 @@ def apex():
 
 # GUI
 
-customtkinter.set_appearance_mode('light')
+customtkinter.set_appearance_mode('dark')
 customtkinter.set_default_color_theme('dark-blue')
 
 root = customtkinter.CTk()
 root.title('butter.exe')
 root.geometry('450x350')
 
+ico = Image.open('assets/logo.png')
+photo = ImageTk.PhotoImage(ico)
+root.wm_iconphoto(False, photo)
 
 # Frames
 
@@ -229,6 +296,8 @@ def optimise():
         val()
     elif chosen[(len(chosen))-1] == 'Fortnite':
         fortnite()
+    elif chosen[(len(chosen))-1] == 'Overwatch 2':
+        overwatch()
 
 # Define
 
@@ -240,10 +309,10 @@ def optionmenu_callback(choice):
 
 # Image
 
-my_image = customtkinter.CTkImage(light_image=Image.open(r"assets\butter.png"),
+my_image = customtkinter.CTkImage(Image.open(r"assets\butter.png"),
                                   size=(250,60))
 
-button1 = customtkinter.CTkButton(frame, text='',image=my_image, fg_color='#e5e5e5', hover_color='#e5e5e5', border_color='#e5e5e5', anchor=tkinter.CENTER)
+button1 = customtkinter.CTkButton(frame, text='',image=my_image, fg_color='#F8D038', hover_color='#F8D038', border_color='#e5e5e5', anchor=tkinter.CENTER)
 button1.pack(padx=20, pady=60, anchor=tkinter.CENTER)
 
 # Dropdown
@@ -255,7 +324,7 @@ combobox.pack(padx=20, pady=10)
 
 # Button
 
-button = customtkinter.CTkButton(master=frame2, text="Optimise", command=optimise)
+button = customtkinter.CTkButton(master=frame2, text="Optimise", fg_color='#3F3F3F', hover_color='#2B2B2B',command=optimise)
 button.pack(padx=20, pady=10)
 
 # Run
