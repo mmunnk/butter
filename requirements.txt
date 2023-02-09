@@ -1,0 +1,5 @@
+nutika
+ordered-set
+zstandard
+customtkinter
+pillow
