@@ -12,3 +12,10 @@ Automatic Config Optimiser
 
 # Reset
 To Restore To Your Old Configs, Locate The Config File And Uncheck "Read Only", Then Boot Into Your Game And Change The Settings
+
+# Build
+
+1. Install requirements:
+    ```
+    pip install -r requirements.txt
+    ```
