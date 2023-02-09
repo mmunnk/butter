@@ -41,16 +41,6 @@ elif os.path.exists(ow2path_local):
     ow2path = ow2path_local
     installed.append('Overwatch 2')
 
-
-def replace_line(file_name, line_num, text):
-    with open(file_name) as f:
-        lines = f.readlines()
-    lines[line_num - 1] = text + '\n'
-
-    with open(file_name, 'w') as f:
-        for line in lines:
-            f.write(line)
-
 # GUI
 
 
